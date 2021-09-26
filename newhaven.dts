@@ -1,0 +1,92 @@
+/*
+ * Raspberry Pi Device Tree overlay for Newhaven Display
+ * NHD-2.4-240320CF-BSXV-F
+ *
+ * Tom Steer, September 2021
+ *
+ * Driver Datasheet : https://www.newhavendisplay.com/resources_dataFiles/datasheets/LCDs/ST7789Vi.pdf
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835", "brcm,bcm2708", "brcm,bcm2709";
+
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+
+			spidev@0{
+				status = "disabled";
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			nhd_display_pins: nhd_display_pins {
+				brcm,pins = <18 23 24 25>;
+				brcm,function = <1 1 1 0>; /* out out out in */
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			nhddisplay: nhd-display@0{
+				compatible = "sitronix,st7789v";
+				reg = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&nhd_display_pins>;
+				spi-max-frequency = <32000000>;
+				rotate = <270>;
+				fps = <30>;
+				buswidth = <8>;
+				reset-gpios = <&gpio 23 1>;
+				dc-gpios = <&gpio 24 0>;
+				led-gpios = <&gpio 18 1>;
+				debug = <0>;
+				init = <0x1000028 /* Display Off */
+						0x1000011 /* Exit sleep mode */
+						0x20000ff /* Delay 255ms */
+						0x1000036 0xA0 /* Set Memory Data Access Control */
+						0x100003a 0x55 /* Set Pixel Interface format - 16bpp 5-6-5 */
+						0x1000020  /* Display inversion Off */
+						0x100002a 0x00 0x01 0x00 0x3f /* Column Address Set */
+						0x100002b 0x00 0x00 0x00 0xef /* Row Address Set */
+						0x10000b2 0x0c 0x0c 0x00 0x33 0x33 /* Porch Setting */
+						0x10000b7 0x35 /* Gate Control */
+						0x10000bb 0x1f /* VCOMS */
+						0x10000c0 0x2c /* LCM control */
+						0x10000c2 0x01 /* VDV and VRH command enable */
+						0x10000c3 0x12 /* VRH set */
+						0x10000c4 0x20 /* VDV set */
+						0x10000c6 0x0f /* Frame Rate Control in Normal Mode */
+						0x10000d0 0xa4 0xa1 /* Power Control 1 */
+						0x10000e0 0xd0 0x08 0x11 0x08 0x0C 0x15 0x39 0x33 0x50 0x36 0x13 0x14 0x29 0x2d /* Positive Voltage Gamma Control */
+						0x10000e1 0xd0 0x08 0x10 0x08 0x06 0x06 0x39 0x44 0x51 0x0b 0x16 0x14 0x2f 0x31 /* Negative Voltage Gamma Control */
+						0x1000029 /* Display On */
+				>;
+
+			};
+
+		};
+	};
+	__overrides__ {
+		speed =   <&nhddisplay>,"spi-max-frequency:0";
+		rotate =  <&nhddisplay>,"rotate:0";
+		fps =     <&nhddisplay>,"fps:0";
+		debug =   <&nhddisplay>,"debug:0";
+	};
+};
+
+
