@@ -1,0 +1,71 @@
+/dts-v1/; 
+/plugin/;
+
+/ {
+    compatible = "allwinner,sun50i-h5";
+
+    fragment@0 {
+        target = <&spi1>;
+        __overlay__ {
+            status = "okay";
+
+            spidev@1{
+                status = "disabled";
+            };
+        };
+    };
+
+
+    fragment@1 {
+        target = <&pio>;
+        __overlay__ {
+            ili9341_pins: ili9431_pins {
+                allwinner,pins = "PA2", "PA7", "PA6"; 
+                allwinner,function = "gpio_out";
+            };
+        };
+    };
+
+    fragment@2 {
+        target = <&spi1>;
+        __overlay__ {
+            /* needed to avoid dtc warning */
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            ili9341: ili9341@0 {
+                compatible = "ilitek,ili9341";
+                reg = <0>;
+                pinctrl-names = "default";
+                pinctrl-0 = <&ili9341_pins>;
+
+                spi-max-frequency = <32000000>;
+                rotate = <270>;
+                fps = <30>;
+                bgr;
+                buswidth = <8>;
+                reset-gpios = <&pio 0 7 1>; /* PIN_12  GPIOA7 */
+                dc-gpios =    <&pio 0 2 0>; /* PIN_22  GPIOA2 */
+                led-gpios =   <&pio 0 6 1>; /* PIN_07  GPIOA6 */
+                debug = <3>;
+
+                init = <0x10000b0 0x00
+                        0x1000011
+                        0x20000ff
+                        0x100003a 0x55
+                        0x1000036 0x28
+                        0x10000c2 0x44
+                        0x10000c5 0x00 0x00 0x00 0x00
+                        0x10000e0 0x0f 0x1f 0x1c 0x0c 0x0f 0x08 0x48 0x98 0x37 0x0a 0x13 0x04 0x11 0x0d 0x00
+                        0x10000e1 0x0f 0x32 0x2e 0x0b 0x0d 0x05 0x47 0x75 0x37 0x06 0x10 0x03 0x24 0x20 0x00
+                        0x10000e2 0x0f 0x32 0x2e 0x0b 0x0d 0x05 0x47 0x75 0x37 0x06 0x10 0x03 0x24 0x20 0x00
+                        0x1000036 0x28
+                        0x1000011
+                        0x1000029>;
+            };
+        };
+    };  
+
+
+};
+
